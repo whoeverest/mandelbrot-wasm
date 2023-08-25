@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>WASM fractal // Beer.js 0.33 // Ohrid 26.08.2023</title>
+    </head>
+    <body>
+        <canvas id="canvas" width="500" height="500" style="border: 1px solid black"></canvas>
+        <script>
+            let ctx = canvas.getContext('2d');
+
+            function drawPixel(x, y, color) {
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, 1, 1);
+            }
+
+            function getRedShade(n) {
+                n = Math.min(Math.floor(n), 255);
+                return `rgb(${n}, 0, 0)`;
+            }
+
+            function scaleToRange(n, sourceRange, targetRange) {
+                if (n < sourceRange.min || n > sourceRange.max) {
+                    throw Error('n is not in the source range');
+                }
+                let percentFromSource = (n - sourceRange.min) / (sourceRange.max - sourceRange.min);
+                return targetRange.min + ((targetRange.max - targetRange.min) * percentFromSource);
+            }
+
+            for (let px = 0; px <= 499; px++) {
+                for (let py = 0; py <= 499; py ++) {
+                    let scaledX = scaleToRange(px, { min: 0, max: 500 },  { min: -2, max: 0.47 });
+                    let scaledY = scaleToRange(py, { min: 0, max: 500 },  { min: -1.12, max: 1.12 });
+                    let x = 0;
+                    let y = 0;
+                    let iteration = 0;
+                    let maxIteration = 1000;
+                    while (((x*x) + (y*y) <= 2) && iteration < maxIteration) {
+                        let xTemp = x*x - y*y + scaledX;
+                        y = 2*x*y + scaledY;
+                        x = xTemp;
+                        iteration += 1;
+                    }
+                    drawPixel(px, py, getRedShade(iteration));
+                }
+            }
+        </script>
+    </body>
+    
+</html>
