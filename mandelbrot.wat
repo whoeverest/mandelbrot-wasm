@@ -10,19 +10,25 @@
 
     (result i32)
 
-    i32.const 0
-    i32.const 100
-    i32.store
+    (local $i i32)
 
-    i32.const 4
-    i32.const 200
-    i32.store
+    (loop $my_loop
+      local.get $i ;; offset
+      i32.const 100
+      i32.store
 
-    i32.const 8
-    i32.const 300
-    i32.store
+      ;; i += 4
+      local.get $i
+      i32.const 4
+      i32.add
+      local.set $i
 
-    ;; return
+      local.get $i
+      i32.const 100
+      i32.lt_u ;; less than, unsigned
+      br_if $my_loop
+    )
+
     i32.const 42
   )
   (export "mandelbrot" (func $mandelbrot))
