@@ -66,6 +66,9 @@
             WebAssembly.instantiateStreaming(fetch("mandelbrot.wasm")).then((obj) => {
                 let resInt = obj.instance.exports.mandelbrot(width, height, xMin, xMax, yMin, yMax);
                 console.log(resInt);
+
+                let memBuffer= obj.instance.exports.memory.buffer;
+                console.log(new Int32Array(memBuffer));
             });
         </script>
     </body>
