@@ -50,15 +50,22 @@
 
             let width = 500;
             let height = 500;
-            let intensitiesArr = mandelbrotJS(width, height, -2, 0.47, -1.12, 1.12);
+            let xMin = -2;
+            let xMax = 0.47;
+            let yMin = -1.12;
+            let yMax = 1.12;
+            
+            let intensitiesArr = mandelbrotJS(width, height, xMin, xMax, yMin, yMax);
+            
             intensitiesArr.forEach((val, i) => {
                 let y = Math.floor(i / width);
                 let x = i % width;
                 drawPixel(y, x, getRedShade(val));
             })
 
-            WebAssembly.instantiateStreaming(fetch("add.wasm")).then((obj) => {
-                console.log(obj.instance.exports.add(100, 200));
+            WebAssembly.instantiateStreaming(fetch("mandelbrot.wasm")).then((obj) => {
+                let resInt = obj.instance.exports.mandelbrot(width, height, xMin, xMax, yMin, yMax);
+                console.log(resInt);
             });
         </script>
     </body>
