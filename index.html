@@ -1,57 +1,61 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>WASM fractal // Beer.js 0.33 // Ohrid 26.08.2023</title>
-    </head>
-    <body>
-        <canvas id="canvas" width="500" height="500" style="border: 1px solid black"></canvas>
-        <script>
-            let ctx = canvas.getContext('2d');
 
-            function drawPixel(x, y, color) {
-                ctx.fillStyle = color;
-                ctx.fillRect(x, y, 1, 1);
+<head>
+    <title>WASM fractal // Beer.js 0.33 // Ohrid 26.08.2023</title>
+</head>
+
+<body>
+    <canvas id="canvas" width="500" height="500" style="border: 1px solid black"></canvas>
+    <script>
+        let ctx = canvas.getContext('2d');
+
+        function drawPixel(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, 1, 1);
+        }
+
+        function getRedShade(n) {
+            n = Math.min(Math.floor(n), 255);
+            return `rgb(${n}, 0, 0)`;
+        }
+
+        function scaleToRange(n, sourceRangeMin, sourceRangeMax, targetRangeMin, targetRangeMax) {
+            if (n < sourceRangeMin || n > sourceRangeMax) {
+                throw Error('n is not in the source range');
             }
+            let percentFromSource = (n - sourceRangeMin) / (sourceRangeMax - sourceRangeMin);
+            return targetRangeMin + ((targetRangeMax - targetRangeMin) * percentFromSource);
+        }
 
-            function getRedShade(n) {
-                n = Math.min(Math.floor(n), 255);
-                return `rgb(${n}, 0, 0)`;
+        function calculateIterations(px, py, width, height, xMin, xMax, yMin, yMax) {
+            let scaledX = scaleToRange(py, 0, width, xMin, xMax);
+            let scaledY = scaleToRange(px, 0, height, yMin, yMax);
+            let x = 0;
+            let y = 0;
+            let iteration = 0;
+            let maxIteration = 1000;
+            while (((x * x) + (y * y) <= 2) && iteration < maxIteration) {
+                let xTemp = x * x - y * y + scaledX;
+                y = 2 * x * y + scaledY;
+                x = xTemp;
+                iteration += 1;
             }
+            return iteration;
+        }
 
-            function scaleToRange(n, sourceRangeMin, sourceRangeMax, targetRangeMin, targetRangeMax) {
-                if (n < sourceRangeMin || n > sourceRangeMax) {
-                    throw Error('n is not in the source range');
+        function mandelbrotJS(width, height, xMin, xMax, yMin, yMax) {
+            let intensitiesArr = [];
+            for (let py = 0; py < height; py++) {
+                for (let px = 0; px < width; px++) {
+                    let iteration = calculateIterations(px, py, width, height, xMin, xMax, yMin, yMax);
+                    intensitiesArr.push(iteration);
                 }
-                let percentFromSource = (n - sourceRangeMin) / (sourceRangeMax - sourceRangeMin);
-                return targetRangeMin + ((targetRangeMax - targetRangeMin) * percentFromSource);
             }
+            return intensitiesArr;
+        }
 
-            function calculateIterations(px, py, width, height, xMin, xMax, yMin, yMax) {
-                let scaledX = scaleToRange(py, 0, width, xMin, xMax);
-                let scaledY = scaleToRange(px, 0, height, yMin, yMax);
-                let x = 0;
-                let y = 0;
-                let iteration = 0;
-                let maxIteration = 1000;
-                while (((x*x) + (y*y) <= 2) && iteration < maxIteration) {
-                    let xTemp = x*x - y*y + scaledX;
-                    y = 2*x*y + scaledY;
-                    x = xTemp;
-                    iteration += 1;
-                }
-                return iteration;
-            }
-
-            function mandelbrotJS(width, height, xMin, xMax, yMin, yMax) {
-                let intensitiesArr = [];
-                for (let py = 0; py < height; py++) {
-                    for (let px = 0; px < width; px ++) {
-                        let iteration = calculateIterations(px, py, width, height, xMin, xMax, yMin, yMax);
-                        intensitiesArr.push(iteration);
-                    }
-                }
-                return intensitiesArr;
-            }
+        WebAssembly.instantiateStreaming(fetch("mandelbrot.wasm")).then((obj) => {
 
             let width = 500;
             let height = 500;
@@ -59,28 +63,38 @@
             let xMax = 0.47;
             let yMin = -1.12;
             let yMax = 1.12;
-            
+
             let intensitiesArr = mandelbrotJS(width, height, xMin, xMax, yMin, yMax);
-            
+
             intensitiesArr.forEach((val, i) => {
+                if (i < 100000 || i > 120000) {
+                    return;
+                }
                 let y = Math.floor(i / width);
                 let x = i % width;
                 drawPixel(y, x, getRedShade(val));
+                console.log(
+                    obj.instance.exports.calculateIterations(
+                        x, y, width, height,
+                        xMin, xMax, yMin, yMax
+                    ))
             })
 
-            WebAssembly.instantiateStreaming(fetch("mandelbrot.wasm")).then((obj) => {
-                let resInt = obj.instance.exports.mandelbrot(width, height, xMin, xMax, yMin, yMax);
-                console.log(resInt);
 
-                let memBuffer= obj.instance.exports.memory.buffer;
-                console.log(new Uint32Array(memBuffer));
+            let resInt = obj.instance.exports.mandelbrot(width, height, xMin, xMax, yMin, yMax);
+            console.log(resInt);
 
-                console.log('scale to range WASM:')
-                console.log(obj.instance.exports.scaleToRange(10.0, 5, 100, 200, 400));
-                console.log('scale to range JS:')
-                console.log(scaleToRange(10.0, 5, 100, 200, 400));
-            });
-        </script>
-    </body>
+            let memBuffer = obj.instance.exports.memory.buffer;
+            console.log(new Uint32Array(memBuffer));
+
+            console.log('scale to range WASM:')
+            console.log(obj.instance.exports.scaleToRange(10.0, 5, 100, 200, 400));
+            console.log('scale to range JS:')
+            console.log(scaleToRange(10.0, 5, 100, 200, 400));
+
+            window.wasm = obj.instance.exports;
+        });
+    </script>
+</body>
 
 </html>

@@ -75,7 +75,125 @@
 
     i32.const 42
   )
+
+  (func $calculateIterations
+    (param $px f64)
+    (param $py f64)
+    (param $width f64)
+    (param $height f64)
+    (param $xMin f64)
+    (param $xMax f64)
+    (param $yMin f64)
+    (param $yMax f64)
+
+    (result i32)
+
+    (local $scaledX f64)
+    (local $scaledY f64)
+    (local $x f64)
+    (local $y f64)
+    (local $iteration i32)
+    (local $maxIteration i32)
+    (local $xTemp f64)
+
+    ;; let scaledX = scaleToRange(py, 0, width, xMin, xMax);    
+    local.get $py
+    f64.const 0
+    local.get $width
+    local.get $xMin
+    local.get $xMax
+    call $scaleToRange
+    local.set $scaledX
+
+    ;; let scaledY = scaleToRange(px, 0, height, yMin, yMax);
+    local.get $px
+    f64.const 0
+    local.get $height
+    local.get $yMin
+    local.get $yMax
+    call $scaleToRange
+    local.set $scaledY
+
+    ;; let x = 0;
+    ;; let y = 0;
+    ;; let iteration = 0;
+    ;; let maxIteration = 1000;
+    f64.const 0
+    local.set $x
+    f64.const 0
+    local.set $y
+    i32.const 0
+    local.set $iteration
+    i32.const 1000
+    local.set $maxIteration
+
+    (block $while
+      (loop $whileBody
+        ;; (x*x) + (y*y) <= 2
+        local.get $x
+        local.get $x
+        f64.mul
+        local.get $y
+        local.get $y
+        f64.mul
+        f64.add
+        f64.const 2
+        f64.le
+        
+        ;; iteration < maxIteration
+        local.get $iteration
+        local.get $maxIteration
+        i32.lt_u
+
+        ;; this is the && operator; if both numbers are unsigned 1,
+        ;; the result will be still an unsigned 1. this can be used
+        ;; for the jump later on.
+        i32.and
+        
+        i32.const 0
+        i32.eq
+        br_if $while
+
+        ;; let xTemp = x*x - y*y + scaledX;
+        local.get $x
+        local.get $x
+        f64.mul
+        local.get $y
+        local.get $y
+        f64.mul
+        f64.sub
+        local.get $scaledX
+        f64.add
+        local.set $xTemp
+
+        ;; y = 2*x*y + scaledY;
+        f64.const 2
+        local.get $x
+        local.get $y
+        f64.mul
+        f64.mul
+        local.get $scaledY
+        f64.add
+        local.set $y
+
+        ;; x = xTemp;
+        local.get $xTemp
+        local.set $x
+
+        ;; iteration += 1;
+        local.get $iteration
+        i32.const 1
+        i32.add
+        local.set $iteration
+
+        br $whileBody
+      )
+    )
+
+    local.get $iteration
+  )
   (export "scaleToRange" (func $scaleToRange))
   (export "mandelbrot" (func $mandelbrot))
+  (export "calculateIterations" (func $calculateIterations))
   (export "memory" (memory $memory))
 )
