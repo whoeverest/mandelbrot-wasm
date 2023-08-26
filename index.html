@@ -26,22 +26,27 @@
                 return targetRangeMin + ((targetRangeMax - targetRangeMin) * percentFromSource);
             }
 
+            function calculateIterations(px, py, width, height, xMin, xMax, yMin, yMax) {
+                let scaledX = scaleToRange(py, 0, width, xMin, xMax);
+                let scaledY = scaleToRange(px, 0, height, yMin, yMax);
+                let x = 0;
+                let y = 0;
+                let iteration = 0;
+                let maxIteration = 1000;
+                while (((x*x) + (y*y) <= 2) && iteration < maxIteration) {
+                    let xTemp = x*x - y*y + scaledX;
+                    y = 2*x*y + scaledY;
+                    x = xTemp;
+                    iteration += 1;
+                }
+                return iteration;
+            }
+
             function mandelbrotJS(width, height, xMin, xMax, yMin, yMax) {
-                let intensitiesArr = []; // memory
-                for (let py = 0; py < height; py++) { // loop $vertical_loop
-                    for (let px = 0; px < width; px ++) { // loop $horizontal_loop
-                        let scaledX = scaleToRange(py, 0, width, xMin, xMax); // fn call $scaleToRange
-                        let scaledY = scaleToRange(px, 0, height, yMin, yMax); // fn call $scaleToRange
-                        let x = 0; // local.set
-                        let y = 0; // local.set
-                        let iteration = 0; // local.set
-                        let maxIteration = 1000; // local.set
-                        while (((x*x) + (y*y) <= 2) && iteration < maxIteration) { // loop $calc_loop
-                            let xTemp = x*x - y*y + scaledX;
-                            y = 2*x*y + scaledY;
-                            x = xTemp;
-                            iteration += 1;
-                        }
+                let intensitiesArr = [];
+                for (let py = 0; py < height; py++) {
+                    for (let px = 0; px < width; px ++) {
+                        let iteration = calculateIterations(px, py, width, height, xMin, xMax, yMin, yMax);
                         intensitiesArr.push(iteration);
                     }
                 }
