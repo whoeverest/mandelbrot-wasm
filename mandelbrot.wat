@@ -1,7 +1,7 @@
 ;; https://developer.mozilla.org/en-US/docs/WebAssembly/Reference
 
 (module
-  (memory $memory 1)
+  (memory $memory 20)
 
   (func $scaleToRange
     (param $n f64)
@@ -47,33 +47,81 @@
   (func $mandelbrot
     (param $width i32)
     (param $height i32)
-    (param $xMin f32)
-    (param $xMax f32)
-    (param $yMin f32)
-    (param $yMax f32)
+    (param $xMin f64)
+    (param $xMax f64)
+    (param $yMin f64)
+    (param $yMax f64)
 
-    (result i32)
+    (local $bigCounter i32)
+    (local $counterMax i32)
 
-    (local $i i32)
+    (local $y i32)
+    (local $x i32)
 
-    (loop $my_loop
-      local.get $i ;; offset
-      i32.const 100
+    (local $res i32)
+
+    ;; total number of pixels
+    local.get $width
+    local.get $height
+    i32.mul
+    local.set $counterMax
+
+    ;; init $bigCounter
+    i32.const 0
+    local.set $bigCounter
+
+    (loop $bigLoop
+      ;; i32.const 100
+      ;; i32.store
+
+      ;; let y = Math.floor(i / width);
+      ;; no need to floor, though.
+      local.get $bigCounter
+      local.get $width
+      i32.div_u
+      local.set $y
+
+      ;; let x = i % width;
+      local.get $bigCounter
+      local.get $width
+      i32.rem_u
+      local.set $x
+
+      ;; calculate iterations
+      local.get $x
+      f64.convert_i32_u
+      local.get $y
+      f64.convert_i32_u
+      local.get $width
+      f64.convert_i32_u
+      local.get $height
+      f64.convert_i32_u
+      local.get $xMin
+      local.get $xMax
+      local.get $yMin
+      local.get $yMax
+      call $calculateIterations
+      local.set $res
+
+      ;; store in memory at offset, multiplied by 4 to account for
+      ;; the 32bit integers
+      local.get $bigCounter
+      i32.const 4
+      i32.mul
+      local.get $res
       i32.store
 
-      ;; i += 4
-      local.get $i
-      i32.const 4
+      i32.const 1
+      local.get $bigCounter
       i32.add
-      local.set $i
+      local.set $bigCounter
 
-      local.get $i
-      i32.const 100
-      i32.lt_u ;; less than, unsigned
-      br_if $my_loop
+      ;; loop or exit
+      local.get $bigCounter
+      local.get $counterMax
+      i32.lt_u
+      br_if $bigLoop
     )
-
-    i32.const 42
   )
 
   (func $calculateIterations

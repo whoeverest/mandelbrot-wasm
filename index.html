@@ -56,7 +56,6 @@
         }
 
         WebAssembly.instantiateStreaming(fetch("mandelbrot.wasm")).then((obj) => {
-
             let width = 500;
             let height = 500;
             let xMin = -2;
@@ -64,33 +63,18 @@
             let yMin = -1.12;
             let yMax = 1.12;
 
-            let intensitiesArr = mandelbrotJS(width, height, xMin, xMax, yMin, yMax);
-
-            intensitiesArr.forEach((val, i) => {
-                if (i < 100000 || i > 120000) {
-                    return;
-                }
-                let y = Math.floor(i / width);
-                let x = i % width;
-                drawPixel(y, x, getRedShade(val));
-                console.log(
-                    obj.instance.exports.calculateIterations(
-                        x, y, width, height,
-                        xMin, xMax, yMin, yMax
-                    ))
-            })
-
-
-            let resInt = obj.instance.exports.mandelbrot(width, height, xMin, xMax, yMin, yMax);
-            console.log(resInt);
-
+            obj.instance.exports.mandelbrot(width, height, xMin, xMax, yMin, yMax);
             let memBuffer = obj.instance.exports.memory.buffer;
-            console.log(new Uint32Array(memBuffer));
+            let uIntArray = new Uint32Array(memBuffer);
 
-            console.log('scale to range WASM:')
-            console.log(obj.instance.exports.scaleToRange(10.0, 5, 100, 200, 400));
-            console.log('scale to range JS:')
-            console.log(scaleToRange(10.0, 5, 100, 200, 400));
+            let totalPixels = width * height;
+            let currentIndex = 0;
+            while (currentIndex < totalPixels) {
+                let y = Math.floor(currentIndex / width);
+                let x = currentIndex % width;
+                drawPixel(y, x, getRedShade(uIntArray[currentIndex]));
+                currentIndex += 1;
+            }
 
             window.wasm = obj.instance.exports;
         });
