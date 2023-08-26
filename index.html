@@ -26,23 +26,31 @@
                 return targetRange.min + ((targetRange.max - targetRange.min) * percentFromSource);
             }
 
-            for (let px = 0; px <= 499; px++) {
-                for (let py = 0; py <= 499; py ++) {
-                    let scaledX = scaleToRange(px, { min: 0, max: 500 },  { min: -2, max: 0.47 });
-                    let scaledY = scaleToRange(py, { min: 0, max: 500 },  { min: -1.12, max: 1.12 });
-                    let x = 0;
-                    let y = 0;
-                    let iteration = 0;
-                    let maxIteration = 1000;
-                    while (((x*x) + (y*y) <= 2) && iteration < maxIteration) {
-                        let xTemp = x*x - y*y + scaledX;
-                        y = 2*x*y + scaledY;
-                        x = xTemp;
-                        iteration += 1;
+            function mandelbrotJS(width, height, xMin, xMax, yMin, yMax) {
+                for (let px = 0; px <= width; px++) {
+                    for (let py = 0; py <= height; py ++) {
+                        let scaledX = scaleToRange(px, { min: 0, max: width },  { min: xMin, max: xMax });
+                        let scaledY = scaleToRange(py, { min: 0, max: height },  { min: yMin, max: yMax });
+                        let x = 0;
+                        let y = 0;
+                        let iteration = 0;
+                        let maxIteration = 1000;
+                        while (((x*x) + (y*y) <= 2) && iteration < maxIteration) {
+                            let xTemp = x*x - y*y + scaledX;
+                            y = 2*x*y + scaledY;
+                            x = xTemp;
+                            iteration += 1;
+                        }
+                        drawPixel(px, py, getRedShade(iteration));
                     }
-                    drawPixel(px, py, getRedShade(iteration));
                 }
             }
+
+            mandelbrotJS(500, 500, -2, 0.47, -1.12, 1.12)
+
+            WebAssembly.instantiateStreaming(fetch("add.wasm")).then((obj) => {
+                console.log(obj.instance.exports.add(100, 200));
+            });
         </script>
     </body>
     
