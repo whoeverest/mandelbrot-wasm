@@ -30,8 +30,8 @@
                 let intensitiesArr = []; // memory
                 for (let py = 0; py < height; py++) { // loop $vertical_loop
                     for (let px = 0; px < width; px ++) { // loop $horizontal_loop
-                        let scaledX = scaleToRange(py, { min: 0, max: width },  { min: xMin, max: xMax }); // fn call $scaleToRange
-                        let scaledY = scaleToRange(px, { min: 0, max: height },  { min: yMin, max: yMax }); // fn call $scaleToRange
+                        let scaledX = scaleToRange(py, 0, width, xMin, xMax); // fn call $scaleToRange
+                        let scaledY = scaleToRange(px, 0, height, yMin, yMax); // fn call $scaleToRange
                         let x = 0; // local.set
                         let y = 0; // local.set
                         let iteration = 0; // local.set
