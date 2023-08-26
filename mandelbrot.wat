@@ -1,5 +1,49 @@
+;; https://developer.mozilla.org/en-US/docs/WebAssembly/Reference
+
 (module
   (memory $memory 1)
+
+  (func $scaleToRange
+    (param $n f64)
+    (param $sourceRangeMin f64)
+    (param $sourceRangeMax f64)
+    (param $targetRangeMin f64)
+    (param $targetRangeMax f64)
+    
+    (result f64)
+
+    (local $percentFromSource f64)
+
+    ;; A = (n - sourceRange.min)
+    local.get $n
+    local.get $sourceRangeMin
+    f64.sub
+
+    ;; B = (sourceRange.max - sourceRange.min)
+    local.get $sourceRangeMax
+    local.get $sourceRangeMin
+    f64.sub
+
+    ;; A / B (division)
+    f64.div
+
+    ;; let percentFromSource = A / B
+    local.set $percentFromSource
+
+    ;; C = (targetRange.max - targetRange.min)
+    local.get $targetRangeMax
+    local.get $targetRangeMin
+    f64.sub
+
+    ;; D = C * percentFromSource
+    local.get $percentFromSource
+    f64.mul
+
+    ;; E = targetRange.min + D
+    local.get $targetRangeMin
+    f64.add
+  )
+
   (func $mandelbrot
     (param $width i32)
     (param $height i32)
@@ -31,6 +75,7 @@
 
     i32.const 42
   )
+  (export "scaleToRange" (func $scaleToRange))
   (export "mandelbrot" (func $mandelbrot))
   (export "memory" (memory $memory))
 )

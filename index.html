@@ -18,25 +18,25 @@
                 return `rgb(${n}, 0, 0)`;
             }
 
-            function scaleToRange(n, sourceRange, targetRange) {
-                if (n < sourceRange.min || n > sourceRange.max) {
+            function scaleToRange(n, sourceRangeMin, sourceRangeMax, targetRangeMin, targetRangeMax) {
+                if (n < sourceRangeMin || n > sourceRangeMax) {
                     throw Error('n is not in the source range');
                 }
-                let percentFromSource = (n - sourceRange.min) / (sourceRange.max - sourceRange.min);
-                return targetRange.min + ((targetRange.max - targetRange.min) * percentFromSource);
+                let percentFromSource = (n - sourceRangeMin) / (sourceRangeMax - sourceRangeMin);
+                return targetRangeMin + ((targetRangeMax - targetRangeMin) * percentFromSource);
             }
 
             function mandelbrotJS(width, height, xMin, xMax, yMin, yMax) {
-                let intensitiesArr = [];
-                for (let py = 0; py < height; py++) {
-                    for (let px = 0; px < width; px ++) {
-                        let scaledX = scaleToRange(py, { min: 0, max: width },  { min: xMin, max: xMax });
-                        let scaledY = scaleToRange(px, { min: 0, max: height },  { min: yMin, max: yMax });
-                        let x = 0;
-                        let y = 0;
-                        let iteration = 0;
-                        let maxIteration = 1000;
-                        while (((x*x) + (y*y) <= 2) && iteration < maxIteration) {
+                let intensitiesArr = []; // memory
+                for (let py = 0; py < height; py++) { // loop $vertical_loop
+                    for (let px = 0; px < width; px ++) { // loop $horizontal_loop
+                        let scaledX = scaleToRange(py, { min: 0, max: width },  { min: xMin, max: xMax }); // fn call $scaleToRange
+                        let scaledY = scaleToRange(px, { min: 0, max: height },  { min: yMin, max: yMax }); // fn call $scaleToRange
+                        let x = 0; // local.set
+                        let y = 0; // local.set
+                        let iteration = 0; // local.set
+                        let maxIteration = 1000; // local.set
+                        while (((x*x) + (y*y) <= 2) && iteration < maxIteration) { // loop $calc_loop
                             let xTemp = x*x - y*y + scaledX;
                             y = 2*x*y + scaledY;
                             x = xTemp;
@@ -69,6 +69,11 @@
 
                 let memBuffer= obj.instance.exports.memory.buffer;
                 console.log(new Uint32Array(memBuffer));
+
+                console.log('scale to range WASM:')
+                console.log(obj.instance.exports.scaleToRange(10.0, 5, 100, 200, 400));
+                console.log('scale to range JS:')
+                console.log(scaleToRange(10.0, 5, 100, 200, 400));
             });
         </script>
     </body>
