@@ -27,10 +27,11 @@
             }
 
             function mandelbrotJS(width, height, xMin, xMax, yMin, yMax) {
-                for (let px = 0; px <= width; px++) {
-                    for (let py = 0; py <= height; py ++) {
-                        let scaledX = scaleToRange(px, { min: 0, max: width },  { min: xMin, max: xMax });
-                        let scaledY = scaleToRange(py, { min: 0, max: height },  { min: yMin, max: yMax });
+                let intensitiesArr = [];
+                for (let py = 0; py < height; py++) {
+                    for (let px = 0; px < width; px ++) {
+                        let scaledX = scaleToRange(py, { min: 0, max: width },  { min: xMin, max: xMax });
+                        let scaledY = scaleToRange(px, { min: 0, max: height },  { min: yMin, max: yMax });
                         let x = 0;
                         let y = 0;
                         let iteration = 0;
@@ -41,12 +42,20 @@
                             x = xTemp;
                             iteration += 1;
                         }
-                        drawPixel(px, py, getRedShade(iteration));
+                        intensitiesArr.push(iteration);
                     }
                 }
+                return intensitiesArr;
             }
 
-            mandelbrotJS(500, 500, -2, 0.47, -1.12, 1.12)
+            let width = 500;
+            let height = 500;
+            let intensitiesArr = mandelbrotJS(width, height, -2, 0.47, -1.12, 1.12);
+            intensitiesArr.forEach((val, i) => {
+                let y = Math.floor(i / width);
+                let x = i % width;
+                drawPixel(y, x, getRedShade(val));
+            })
 
             WebAssembly.instantiateStreaming(fetch("add.wasm")).then((obj) => {
                 console.log(obj.instance.exports.add(100, 200));
